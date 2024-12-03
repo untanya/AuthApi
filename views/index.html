@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Données du Capteur de Luminosité</title>
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Données du Capteur de Luminosité</h1>
+    <div class="controls">
+        <label for="mode">Mode :</label>
+        <select id="mode">
+            <option value="range">Plage de dates</option>
+            <option value="all">Toutes les données</option>
+        </select>
+        <div id="dateControls">
+            <label for="startDate">Date de début :</label>
+            <input type="datetime-local" id="startDate" step="0.001">
+            <label for="endDate">Date de fin :</label>
+            <input type="datetime-local" id="endDate" step="0.001">
+        </div>
+        <button id="fetchData">Récupérer les données</button>
+    </div>
+    <canvas id="sensorChart"></canvas>
+    <script src="/scripts/index.js" defer></script>
+</body>
+</html>
