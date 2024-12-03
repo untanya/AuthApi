@@ -2,10 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const logger = require('../utils/logger');
 require('dotenv').config();
+const path = require('path')
 
 // Import des routes
 const authRoutes = require('../routes/auth');
 const SensorRoutes = require('../routes/lightSensor')
+const webRouter = require('../pages/server.web');
 
 const app = express();
 
@@ -13,11 +15,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(logger.request);
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Configuration des routes
 const setupRoutes = () => {
     app.use('/auth', authRoutes);
     app.use('/sensor', SensorRoutes);
+    app.use('/web', webRouter);
     
     // Route par défaut pour les URLs non trouvées
     app.use('*', (req, res) => {

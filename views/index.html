@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Light Sensor Data</title>
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Light Sensor Data</h1>
+    <div class="controls">
+        <label for="mode">Mode:</label>
+        <select id="mode">
+            <option value="range">Range</option>
+            <option value="all">All Data</option>
+        </select>
+        <div id="dateControls">
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate">
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate">
+        </div>
+        <button id="fetchData">Fetch Data</button>
+    </div>
+    <canvas id="sensorChart"></canvas>
+    <script src="/scripts/index.js" defer></script>
+</body>
+</html>
