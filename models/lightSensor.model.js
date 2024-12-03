@@ -20,7 +20,8 @@ const LightSensor = sequelize.define('LightSensor', {
         defaultValue: 'LIGHT_SENSOR_01'
     }
 }, {
-    tableName: 'LightSensor'
+    tableName: 'LightSensor',
+    timestamps: false  // Désactive createdAt/updatedAt
 });
 
 module.exports = LightSensor;

@@ -5,6 +5,7 @@ require('dotenv').config();
 
 // Import des routes
 const authRoutes = require('../routes/auth');
+const SensorRoutes = require('../routes/lightSensor')
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(logger.request);
 // Configuration des routes
 const setupRoutes = () => {
     app.use('/auth', authRoutes);
+    app.use('/sensor', SensorRoutes);
     
     // Route par défaut pour les URLs non trouvées
     app.use('*', (req, res) => {

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const LightSensor = require('../models/user.model');
+const LightSensor = require('../models/lightSensor.model');
 const logger = require('../utils/logger');
+const sequelize = require('sequelize');
 
 // Récupérer tous les utilisateurs
 router.get('/', async (req, res) => {
@@ -24,44 +25,26 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Récupérer un utilisateur par ID
-router.get('/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        if (isNaN(id)) {
-            return res.status(400).json({
-                success: false,
-                error: 'ID invalide',
-                details: 'L\'ID doit être un nombre'
-            });
-        }
+router.post('/range', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+    
+    const sensors = await LightSensor.findAll({
+      where: sequelize.literal(`timestamp BETWEEN CONVERT(DATETIME, '${startDate}') AND CONVERT(DATETIME, '${endDate}')`)
+    });
 
-        const user = await User.findByPk(id);
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: 'Utilisateur non trouvé',
-                details: `Aucun utilisateur trouvé avec l'ID ${id}`
-            });
-        }
-
-        logger.info('Utilisateur récupéré avec succès', { id });
-        
-        res.json({
-            success: true,
-            data: user,
-            message: 'Utilisateur récupéré avec succès'
-        });
-    } catch (error) {
-        logger.error('Erreur lors de la récupération de l\'utilisateur', error);
-        res.status(500).json({
-            success: false,
-            error: 'Erreur lors de la récupération de l\'utilisateur',
-            details: error.message
-        });
-    }
+    res.json({
+      success: true,
+      data: sensors,
+      count: sensors.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération des données des capteurs de lumière',
+      details: error.message
+    });
+  }
 });
 
 module.exports = router;
