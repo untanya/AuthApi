@@ -1,0 +1,16 @@
+services:
+  app:
+    build:
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  mssql:
+    environment:
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"

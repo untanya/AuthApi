@@ -1,0 +1,36 @@
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - PORT=${PORT}
+      - DB_Host=172.20.48.1
+      - DB_User=root
+      - DB_Passwd=root@1234
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - ROOT_PASSWORD=root@1234
+      - MSSQL_PID=Developer
+      - MSSQL_TCP_PORT=1433
+    networks:
+      - app-network
+    volumes:
+      - sqlvolume:/var/opt/mssql
+
+volumes:
+  sqlvolume:
+
+networks:
+  app-network:
+    driver: bridge
