@@ -1,14 +1,13 @@
-// Get DOM elements for interacting with the page
-// These constants are used throughout the code to manipulate the UI elements
+// Get all DOM elements needed for the application
 const fetchDataButton = document.getElementById('fetchData');
 const startDateInput = document.getElementById('startDate');
 const endDateInput = document.getElementById('endDate');
 const modeSelect = document.getElementById('mode');
+const sensorSelect = document.getElementById('sensorSelect');
 const dateControls = document.getElementById('dateControls');
 const ctx = document.getElementById('sensorChart').getContext('2d');
 
-// Initialize Chart.js with custom configuration
-// This setup defines the chart's appearance and behavior
+// Initialize Chart.js instance
 let sensorChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -24,7 +23,6 @@ let sensorChart = new Chart(ctx, {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        // Animation configuration for smooth transitions
         animation: {
             duration: 750,
             easing: 'easeInOutQuart'
@@ -40,7 +38,6 @@ let sensorChart = new Chart(ctx, {
             legend: {
                 position: 'top',
             },
-            // Custom tooltip to display sensor information
             tooltip: {
                 callbacks: {
                     label: function(context) {
@@ -67,8 +64,7 @@ let sensorChart = new Chart(ctx, {
     },
 });
 
-// Converts ISO date format to SQL compatible format
-// This is necessary because our backend expects dates in a specific SQL format
+// Function to convert ISO date to SQL format
 function isoToSqlDate(isoDate) {
     if (!isoDate) return '';
     const date = new Date(isoDate);
@@ -81,8 +77,29 @@ function isoToSqlDate(isoDate) {
            '00.000';
 }
 
+// Function to load sensors into the select dropdown
+async function loadSensors() {
+    try {
+        const response = await fetch('/sensors');
+        const { data: sensors } = await response.json();
+        
+        // Reset select content
+        sensorSelect.innerHTML = '<option value="all">Tous les capteurs</option>';
+        
+        // Add each sensor as an option
+        sensors.forEach(sensor => {
+            const option = document.createElement('option');
+            option.value = sensor.id;
+            option.textContent = `${sensor.name} (${sensor.location})`;
+            sensorSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Erreur lors du chargement des capteurs:', error);
+        alert('Impossible de charger la liste des capteurs');
+    }
+}
+
 // Handle mode changes (Range/All Data)
-// This event listener manages the UI updates when switching modes
 modeSelect.addEventListener('change', () => {
     if (modeSelect.value === 'all') {
         dateControls.classList.add('hidden');
@@ -90,12 +107,12 @@ modeSelect.addEventListener('change', () => {
         dateControls.classList.remove('hidden');
     }
 
-    // Reset chart data with animation when changing modes
+    // Reset chart data with animation
     sensorChart.data.labels = [];
     sensorChart.data.datasets[0].data = [];
     sensorChart.options.plugins.title = {
         display: true,
-        text: 'Données du Capteur de Luminosité (0 mesures)'
+        text: 'Données du Capteur de Lumière (0 mesures)'
     };
     
     sensorChart.update({
@@ -104,12 +121,12 @@ modeSelect.addEventListener('change', () => {
     });
 });
 
-// Main data fetching function triggered by the Fetch button
-// This handles both Range and All Data modes
+// Main data fetching function
 fetchDataButton.addEventListener('click', async () => {
     console.log('Bouton de récupération cliqué');
     
     const mode = modeSelect.value;
+    const selectedSensor = sensorSelect.value;
     const rawStartDate = startDateInput.value;
     const rawEndDate = endDateInput.value;
     
@@ -117,25 +134,26 @@ fetchDataButton.addEventListener('click', async () => {
         let response;
         let startDate, endDate;
 
-        // Handle different API endpoints based on selected mode
         if (mode === 'range') {
             startDate = isoToSqlDate(rawStartDate);
             endDate = isoToSqlDate(rawEndDate);
             
             console.log('Dates de la requête :', { rawStartDate, rawEndDate, startDate, endDate });
-
+        
             if (!startDate || !endDate) {
                 alert(`Erreur de date : Date de début = "${rawStartDate}", Date de fin = "${rawEndDate}". Les deux dates doivent être spécifiées.`);
                 return;
             }
-
+        
             const requestBody = {
                 startDate,
-                endDate
+                endDate,
+                sensor_id: selectedSensor !== 'all' ? selectedSensor : undefined
             };
+            
             console.log('Corps de la requête :', JSON.stringify(requestBody, null, 2));
-
-            response = await fetch('/sensor/range', {
+        
+            response = await fetch('/measurements/range', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -143,12 +161,19 @@ fetchDataButton.addEventListener('click', async () => {
                 body: JSON.stringify(requestBody),
             });
         } else {
-            response = await fetch('/sensor', {
-                method: 'GET',
-            });
+            if (selectedSensor !== 'all') {
+                response = await fetch('/measurements/sensor/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ sensor_id: selectedSensor })
+                });
+            } else {
+                response = await fetch('/measurements');
+            }
         }
 
-        // Process and validate API response
         const responseText = await response.text();
         console.log('Réponse brute :', responseText);
         
@@ -170,22 +195,20 @@ fetchDataButton.addEventListener('click', async () => {
             throw new Error(`L'API a retourné success: false - ${responseData.error || 'Erreur inconnue'}`);
         }
 
-        // Validate received data
         if (!data || !Array.isArray(data) || data.length === 0) {
             const periodMessage = mode === 'range' ? ` pour la période ${startDate} à ${endDate}` : '';
-            throw new Error(`Aucune donnée retournée${periodMessage}`);
+            const sensorMessage = selectedSensor !== 'all' ? ` et le capteur ${selectedSensor}` : '';
+            throw new Error(`Aucune donnée retournée${periodMessage}${sensorMessage}`);
         }
 
         console.log(`${data.length} points de données reçus`);
 
-        // Update chart title with measurement count
         const measurementCount = data.length;
         sensorChart.options.plugins.title = {
             display: true,
-            text: `Données du Capteur de Luminosité (${measurementCount} mesures)`
+            text: `Données du Capteur de Lumière (${measurementCount} mesures)`
         };
 
-        // Process and format data for the chart
         sensorChart.data.labels = data.map(item => {
             const date = new Date(item.timestamp);
             return date.toLocaleString();
@@ -203,7 +226,6 @@ fetchDataButton.addEventListener('click', async () => {
             data: sensorChart.data.datasets[0].data
         });
 
-        // Update chart with animation
         sensorChart.update({
             duration: 750,
             easing: 'easeInOutQuart'
@@ -216,6 +238,8 @@ fetchDataButton.addEventListener('click', async () => {
     }
 });
 
-// Initialize date controls visibility based on initial mode
-// This ensures the UI is in the correct state when the page loads
-modeSelect.dispatchEvent(new Event('change'));
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    loadSensors();
+    modeSelect.dispatchEvent(new Event('change'));
+});

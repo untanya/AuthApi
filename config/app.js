@@ -6,7 +6,8 @@ const path = require('path')
 
 // Import des routes
 const authRoutes = require('../routes/auth');
-const SensorRoutes = require('../routes/lightSensor')
+const MeasurementRoutes = require('../routes/lightMeasurements')
+const SensorRoutes = require('../routes/sensor')
 const webRouter = require('../pages/server.web');
 
 const app = express();
@@ -20,7 +21,8 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Configuration des routes
 const setupRoutes = () => {
     app.use('/auth', authRoutes);
-    app.use('/sensor', SensorRoutes);
+    app.use('/measurements', MeasurementRoutes);
+    app.use('/sensors', SensorRoutes);
     app.use('/web', webRouter);
     
     // Route par défaut pour les URLs non trouvées
