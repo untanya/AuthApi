@@ -54,6 +54,10 @@ canvas {
     display: none;
 }
 
+#sensorSelect {
+    min-width: 200px; /* Pour avoir assez de place pour le nom et la localisation */
+}
+
 @media (max-width: 768px) {
     canvas {
         height: 70vh;
